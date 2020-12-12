@@ -51,15 +51,20 @@
       :before-close="handleClose"
     >
       <!-- form表单 -->
-      <el-form ref="form" :model="form" label-width="80px" :rules="rules">
-        <el-form-item label="品牌名称" prop="name">
+      <el-form
+        ref="trademarkForm"
+        :model="trademarkForm"
+        label-width="80px"
+        :rules="rules"
+      >
+        <el-form-item label="品牌名称" prop="tmName">
           <el-input
-            v-model="form.tmName"
+            v-model="trademarkForm.tmName"
             placeholder="请输入品牌名称"
           ></el-input>
         </el-form-item>
         <!-- 上传框 -->
-        <el-form-item label="品牌logo" prop="logo">
+        <el-form-item label="品牌logo" prop="logoUrl">
           <el-upload
             class="avatar-uploader"
             :action="`${$BASE_API}/admin/product/fileUpload`"
@@ -67,14 +72,21 @@
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload"
           >
-            <img v-if="form.logoUrl" :src="form.logoUrl" class="avatar" />
+            <img
+              v-if="trademarkForm.logoUrl"
+              :src="trademarkForm.logoUrl"
+              class="avatar"
+            />
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
         </el-form-item>
+        <span>只能上传jpg、jpeg和png格式的图片，并且大小不能超过50KB</span>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="addView = false">取 消</el-button>
-        <el-button type="primary" @click="submitForm(form)">确 定</el-button>
+        <el-button type="primary" @click="submitForm('trademarkForm')"
+          >确 定</el-button
+        >
       </span>
     </el-dialog>
   </div>
@@ -90,12 +102,12 @@ export default {
       size: 3,
       total: 10,
       addView: false,
-      form: {
+      trademarkForm: {
         tmName: "",
         logoUrl: "",
       },
       rules: {
-        name: [
+        tmName: [
           { required: true, message: "请输入品牌名称", trigger: "blur" },
           {
             min: 3,
@@ -104,11 +116,17 @@ export default {
             trigger: "blur",
           },
         ],
-        logo: [{ required: true, message: "请上传品牌LOGO" }],
+        logoUrl: [{ required: true, message: "请上传品牌LOGO" }],
       },
       viewName: "",
       trademarkID: 0,
     };
+  },
+  watch: {
+    //清空校验结果
+    addView() {
+      this.$refs.trademarkForm && this.$refs.trademarkForm.clearValidate();
+    },
   },
   methods: {
     //每页数量改变
@@ -133,31 +151,34 @@ export default {
     },
     //添加品牌
     addTrademark() {
-      this.form.tmName = "";
-      this.form.logoUrl = "";
+      if (this.trademarkForm.tmName || this.trademarkForm.logoUrl) {
+        this.trademarkForm.tmName = "";
+        this.trademarkForm.logoUrl = "";
+      }
       this.viewName = "添加品牌";
       this.addView = true;
     },
     //确定添加品牌
-    async submitForm(form) {
-      if (!form.tmName) {
-        this.$message.error("品牌名称不能为空");
-        return;
-      }
-      if (!form.logoUrl) {
-        this.$message.error("品牌LOGO不能为空");
-        return;
-      }
-      this.addView = false;
-      if (this.viewName === "修改品牌") {
-        const id = this.trademarkID;
-        const banner = { ...this.form, id };
-        await this.$API.product.updatePageList(banner);
-        this.gettrademark(this.page, this.size);
-        return;
-      }
-      await this.$API.product.addPageList(form);
-      this.gettrademark(this.page, this.size);
+    submitForm(form) {
+      //检测表单检测是否通过
+      this.$refs[form].validate(async (valid) => {
+        if (valid) {
+          this.addView = false;
+          if (this.viewName === "修改品牌") {
+            const id = this.trademarkID;
+            const banner = { ...this.$refs[form].model, id };
+            await this.$API.product.updatePageList(banner);
+            this.$message("修改成功");
+            this.gettrademark(this.page, this.size);
+            return;
+          }
+          await this.$API.product.addPageList(this.$refs[form].model);
+          this.$message("添加成功");
+          this.gettrademark(this.page, this.size);
+        } else {
+          this.$message.warning("数据格式有误，请检查后提交");
+        }
+      });
     },
     //关闭添加窗口
     handleClose() {
@@ -165,7 +186,7 @@ export default {
     },
     //文件上传成功
     handleAvatarSuccess(file, fileList) {
-      this.form.logoUrl = file.data;
+      this.trademarkForm.logoUrl = file.data;
     },
     //文件上传之前
     beforeAvatarUpload(file) {
@@ -187,8 +208,8 @@ export default {
     editTrademark(data) {
       this.addView = true;
       this.viewName = "修改品牌";
-      this.form.tmName = data.tmName;
-      this.form.logoUrl = data.logoUrl;
+      this.trademarkForm.tmName = data.tmName;
+      this.trademarkForm.logoUrl = data.logoUrl;
       this.trademarkID = data.id;
     },
     //删除品牌
