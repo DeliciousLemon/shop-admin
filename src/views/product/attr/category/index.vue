@@ -63,12 +63,18 @@ export default {
   methods: {
     //获取数据选项2
     async getAttrList2(id) {
+      this.attrs2 = []
+      this.attrs3 = []
+      this.category.category2Id = ""
+      this.category.category3Id = ""
       const attrs = await this.$API.attr.getAttrList2(id);
       this.category.category1Id = id
       this.attrs2 = attrs.data;
     },
     //获取数据选项3
     async getAttrList3(id) {
+      this.attrs3 = []
+      this.category.category3Id = ""
       const attrs = await this.$API.attr.getAttrList3(id);
       this.category.category2Id = id
       this.attrs3 = attrs.data;
