@@ -3,7 +3,7 @@
     <el-button style="margin-bottom: 20px" type="primary" @click="addTrademark"
       >+添加品牌</el-button
     >
-    <el-table :data="trademarkList" style="width: 100%" border>
+    <el-table :loading="loading" :data="trademarkList" style="width: 100%" border>
       <el-table-column type="index" label="序号" width="50" align="center">
       </el-table-column>
       <el-table-column prop="tmName" label="品牌名称" width="180">
@@ -120,6 +120,7 @@ export default {
       },
       viewName: "",
       trademarkID: 0,
+      loading:false
     };
   },
   watch: {
@@ -141,7 +142,8 @@ export default {
     },
     //获取品牌信息
     async gettrademark(page, size) {
-      const trademarkList = await this.$API.product.getPageList(page, size);
+      console.log(this.$API.attr)
+      const trademarkList = await this.$API.trademark.getPageList(page, size);
       if (trademarkList.code === 200) {
         this.trademarkList = trademarkList.data.records;
         this.size = trademarkList.data.size;
