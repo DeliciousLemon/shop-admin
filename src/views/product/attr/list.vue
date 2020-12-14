@@ -26,13 +26,17 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150">
-          <template slot-scope="scope">
+          <template v-slot="{ row }">
             <el-button
               type="warning"
               icon="el-icon-edit"
-              @click="edit(scope.row)"
+              @click="edit(row)"
             ></el-button>
-            <el-button type="danger" icon="el-icon-delete"></el-button>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              @click="delAttr(row)"
+            ></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -67,7 +71,14 @@
             }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150"> </el-table-column>
+        <el-table-column label="操作" width="150">
+          <template v-slot="{ row }">
+            <el-button
+              @click="delAttrValue(row)"
+              icon="el-icon-delete"
+            ></el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <el-button style="margin: 20px" type="primary" @click="save"
         >保存</el-button
@@ -85,6 +96,7 @@ export default {
     return {
       attrValue: [],
       isEditMode: true,
+      editId: "",
       editName: "",
       editValue: [],
     };
@@ -100,15 +112,26 @@ export default {
     //编辑属性值
     edit(row) {
       this.isEditMode = false;
-      this.editValue = row.attrValueList;
-      this.editName = row.attrName;
+      const { attrValueList, attrName, id } = row;
+      this.editValue = JSON.parse(JSON.stringify(attrValueList));
+      this.editName = attrName;
+      this.editId = id;
     },
     addAttr() {
+      this.editName = "";
+      this.editValue = [];
       this.isEditMode = !this.isEditMode;
+    },
+    async delAttr(row) {
+      await this.$API.attr.delAttr(row.id);
+      this.attrValue = this.attrValue.filter(item=> item.id !== row.id)
     },
     //添加属性值
     addAttrValue() {
-      console.log(1);
+      this.editValue.push({ isEdit: true });
+      this.$nextTick(() => {
+        this.$refs.input.focus();
+      });
     },
     //点击变为输入框
     editAttrValue(row) {
@@ -121,12 +144,35 @@ export default {
     editDone(row) {
       row.isEdit = false;
     },
+    //保存修改
     async save() {
-      const data = this.attrValue.find(
-        (item) => item.attrName === this.editName
-      );
+      let data;
+      if (this.editId) {
+        console.log(1, this.attrValue.includes(this.editId));
+        this.attrValue.map((item) => {
+          if (item.id === this.editId) {
+            item.attrName = this.editName;
+            data = item;
+          }
+        });
+        data.attrValueList = this.editValue;
+      } else {
+        data = {
+          attrName: this.editName,
+          attrValueList: this.editValue,
+          categoryId: this.attrValue[0].categoryId,
+          categoryLevel: 3,
+          id: "",
+        };
+        this.attrValue.push(data)
+      }
+      this.isEditMode = true;
+
       await this.$API.attr.saveAttr(data);
-      this.isEditMode = true
+      this.$forceUpdate();
+    },
+    delAttrValue(row) {
+      this.editValue = this.editValue.filter((item) => item.id !== row.id);
     },
   },
 };
