@@ -226,6 +226,7 @@ export default {
   },
 };
 </script>
+
 <style lang="sass">
 .trademark-logo
   width: 150px

@@ -7,6 +7,7 @@
             @change="getAttrList2"
             v-model="category.category1Id"
             placeholder="请选择"
+            :disabled="!isEditMode"
           >
             <el-option
               v-for="attr1 in attrs1"
@@ -21,6 +22,7 @@
             @change="getAttrList3"
             v-model="category.category2Id"
             placeholder="请选择"
+            :disabled="!isEditMode"
           >
             <el-option
               :label="attr2.name"
@@ -31,7 +33,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="三级分类">
-          <el-select @change="getAttrValue" v-model="category.category3Id" placeholder="请选择">
+          <el-select @change="getAttrValue" v-model="category.category3Id" placeholder="请选择" :disabled="!isEditMode">
             <el-option
               :label="attr3.name"
               :value="attr3.id"
@@ -60,6 +62,12 @@ export default {
       attrs3: [],
     };
   },
+  props:{
+    isEditMode:{
+      type:Boolean,
+      required:true
+    }
+  },
   methods: {
     //获取数据选项2
     async getAttrList2(id) {
@@ -70,6 +78,7 @@ export default {
       const attrs = await this.$API.attr.getAttrList2(id);
       this.category.category1Id = id
       this.attrs2 = attrs.data;
+      this.$bus.$emit("change",this.category)
     },
     //获取数据选项3
     async getAttrList3(id) {
@@ -78,11 +87,12 @@ export default {
       const attrs = await this.$API.attr.getAttrList3(id);
       this.category.category2Id = id
       this.attrs3 = attrs.data;
+      this.$bus.$emit("change",this.category)
     },
     //保存id3
     getAttrValue(id3){
       this.category.category3Id = id3
-      this.$emit("change",this.category)
+      this.$bus.$emit("change",this.category)
     }
   },
   async mounted() {

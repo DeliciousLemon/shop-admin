@@ -1,13 +1,13 @@
 <template>
   <div>
-    <Category @change="getAttrValue" />
+    <Category :isEditMode="isEditMode" />
     <!-- 展示表格 -->
     <el-card style="margin-top: 20px" v-show="isEditMode">
       <el-button
         style="margin-bottom: 20px"
         type="primary"
         @click="addAttr"
-        :disabled="!attrValue.length"
+        :disabled="!category3Id"
         >+添加属性</el-button
       >
       <el-table style="width: 100%" border :data="attrValue">
@@ -53,6 +53,7 @@
         style="margin: 20px 0; display: block"
         type="primary"
         @click="addAttrValue"
+        :disabled="!editName"
         >+添加属性值</el-button
       >
       <el-table style="width: 100%" border :data="editValue">
@@ -89,13 +90,14 @@
 </template>
 
 <script>
-import Category from "./category";
+import Category from "@/components/category";
 export default {
   name: "AttrList",
   data() {
     return {
       attrValue: [],
       isEditMode: true,
+      category3Id: "",
       editId: "",
       editName: "",
       editValue: [],
@@ -106,6 +108,10 @@ export default {
   },
   methods: {
     async getAttrValue(category) {
+      this.category3Id = category.category3Id;
+      this.attrValue = [];
+      //如果没有3id（没有选择第三个下拉框）则不发送请求
+      if (!this.category3Id) return;
       const attrValue = await this.$API.attr.getAllAttr(category);
       this.attrValue = attrValue.data;
     },
@@ -120,11 +126,12 @@ export default {
     addAttr() {
       this.editName = "";
       this.editValue = [];
+      this.editId = "";
       this.isEditMode = !this.isEditMode;
     },
     async delAttr(row) {
       await this.$API.attr.delAttr(row.id);
-      this.attrValue = this.attrValue.filter(item=> item.id !== row.id)
+      this.attrValue = this.attrValue.filter((item) => item.id !== row.id);
     },
     //添加属性值
     addAttrValue() {
@@ -160,11 +167,10 @@ export default {
         data = {
           attrName: this.editName,
           attrValueList: this.editValue,
-          categoryId: this.attrValue[0].categoryId,
+          categoryId: this.attrValue[0].category3Id,
           categoryLevel: 3,
-          id: "",
         };
-        this.attrValue.push(data)
+        this.attrValue.push(data);
       }
       this.isEditMode = true;
 
@@ -175,6 +181,12 @@ export default {
       this.editValue = this.editValue.filter((item) => item.id !== row.id);
     },
   },
+  mounted() {
+    this.$bus.$on("change", this.getAttrValue);
+  },
+  beforeDestroy(){
+    this.$bus.$off("change", this.getAttrValue);
+  }
 };
 </script>
 <style lang="sass">
