@@ -54,7 +54,8 @@ export default {
     //进入编辑模式
     edit(row){
       this.$bus.$emit("getEditValue",row)
-      this.$bus.$emit('changeMode',row)
+      this.$bus.$emit('changeMode')
+      this.$bus.$emit('spuTrademark',row)
     },
     //切换页码
     async changePage(page) {

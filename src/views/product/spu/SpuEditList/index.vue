@@ -10,7 +10,10 @@
         </el-form-item>
 
         <el-form-item label="品牌">
-          <el-select v-model="tmValue" placeholder="请选择品牌">
+          <el-select
+            v-model="spuForm.spuTrademark.tmId"
+            placeholder="请选择品牌"
+          >
             <el-option
               :label="tm.tmName"
               :value="tm.id"
@@ -35,13 +38,19 @@
             list-type="picture-card"
             :file-list="spuForm.spuImg"
             :on-remove="handleRemove"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
           >
             <i class="el-icon-plus"></i>
           </el-upload>
         </el-form-item>
 
         <el-form-item label="销售属性">
-          <el-select v-model="saleValue" placeholder="请选择销售属性" :disabled="!filterSaleValue.length">
+          <el-select
+            v-model="saleValue"
+            placeholder="请选择销售属性"
+            :disabled="!filterSaleValue.length"
+          >
             <el-option
               :label="sale.name"
               :value="sale.id"
@@ -80,7 +89,7 @@
           <el-button style="margin: 10px 20px 0 0" type="primary"
             >保存</el-button
           >
-          <el-button @click="$bus.$emit('changeMode')">取消</el-button>
+          <el-button @click="exitEdit">取消</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -96,6 +105,7 @@ export default {
         saleId: "", //当前编辑属性id
         spuName: "", //属性名
         trademark: [], //所有品牌
+        spuTrademark: "", //当前品牌
         description: "", //当前属性描述
         spuImg: [], //当前属性图片
         saleValue: [], //所有销售属性的值
@@ -106,13 +116,52 @@ export default {
     };
   },
   computed: {
+    //过滤销售属性
     filterSaleValue() {
-      return this.spuForm.saleValue.filter(item =>{
-        return !this.spuForm.saleSelected.find(img => img.baseSaleAttrId === item.id)
-      })
+      return this.spuForm.saleValue.filter((item) => {
+        return !this.spuForm.saleSelected.find(
+          (img) => img.baseSaleAttrId === item.id
+        );
+      });
+    },
+    //更改imgList名称,用于发送保存图片的请求
+    filterImgList() {
+      return this.spuForm.spuImg.map((item) => ({
+        imgName: item.name,
+        imgUrl: item.url,
+      }));
     },
   },
   methods: {
+    //图片上传之前
+    beforeAvatarUpload(file) {
+      //格式白名单
+      const styleList = ["image/jpg", "image/png", "image/jpeg"];
+      //判断上传的文件格式
+      if (!styleList.includes(file.type)) {
+        this.$message.error("只能上传jpg、jpeg和png格式的图片");
+        return false;
+      }
+      //判断文件大小
+      if (file.size / 1024 > 50) {
+        this.$message.error("只能上传小于50KB的图片");
+        return false;
+      }
+      return true;
+    },
+    //文件上传成功
+    handleAvatarSuccess(file, fileList) {
+      console.log(file, fileList);
+      this.spuForm.spuImg.push({
+        name: fileList.name,
+        url: file.data,
+        uid: fileList.uid
+      });
+    },
+    //接收当前品牌
+    getSpuTrademark(row) {
+      this.spuForm.spuTrademark = { ...row };
+    },
     //删除图片
     handleRemove(value) {
       this.spuForm.spuImg = this.spuForm.spuImg.filter(
@@ -137,7 +186,6 @@ export default {
         return;
       }
       this.spuForm.trademark = result.data;
-      console.log(result)
     },
     //获取spu图片
     async getImage(id) {
@@ -147,9 +195,8 @@ export default {
         return;
       }
       this.spuForm.spuImg = result.data.map((item) => {
-        return { name: item.imgName, url: item.imgUrl };
+        return { uid: item.id, name: item.imgName, url: item.imgUrl };
       });
-      console.log(result)
     },
     //获取销售属性
     async getSale() {
@@ -159,7 +206,6 @@ export default {
         return;
       }
       this.spuForm.saleValue = result.data;
-      console.log(result)
     },
     //获取SPU属性
     async getSpu(id) {
@@ -169,11 +215,25 @@ export default {
         return;
       }
       this.spuForm.saleSelected = result.data.spuSaleAttrList;
-      console.log(result)
+    },
+    //退出edit模式
+    exitEdit() {
+      this.$bus.$emit("changeMode");
+      this.spuForm = {
+        saleId: "",
+        spuName: "",
+        trademark: [],
+        spuTrademark: "",
+        description: "",
+        spuImg: [],
+        saleValue: [],
+        saleSelected: [],
+      };
     },
   },
   mounted() {
     this.$bus.$on("getEditValue", this.editValue);
+    this.$bus.$on("spuTrademark", this.getSpuTrademark);
   },
   beforeDestroy() {
     this.$bus.$off("getEditValue", this.editValue);
