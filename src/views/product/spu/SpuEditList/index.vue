@@ -82,12 +82,27 @@
             <el-table-column label="属性值名称列表">
               <template v-slot="{ row }">
                 <el-tag
+                  @close="delSaleAttrValue(row,index)"
+                  closable
                   type="success"
-                  v-for="saleAttr in row.spuSaleAttrValueList"
+                  v-for="(saleAttr,index) in row.spuSaleAttrValueList"
                   :key="saleAttr.id"
                   >{{ saleAttr.saleAttrValueName }}</el-tag
                 >
-                <el-button icon="el-icon-plus">添加销售属性值</el-button>
+                <el-input
+                  @blur="loseFocus(row)"
+                  @keydown.enter.native="loseFocus(row)"
+                  ref="input"
+                  v-show="row.edit"
+                  v-model="spuForm.saleAttrValue"
+                />
+                <el-button
+                  v-show="!row.edit"
+                  icon="el-icon-plus"
+                  @click="addSaleAttrValue(row)"
+                  size="mini"
+                  >添加销售属性值</el-button
+                >
               </template>
             </el-table-column>
 
@@ -125,6 +140,7 @@ export default {
         spuImg: [], //当前属性图片
         saleValue: [], //所有销售属性的值
         saleSelected: [], //已有的销售属性
+        saleAttrValue: "", //输入的销售属性值
       },
       tmValue: "",
       saleValue: "",
@@ -149,16 +165,48 @@ export default {
     },
   },
   methods: {
+    //删除销售属性值
+    delSaleAttrValue(row,index) {
+      this.spuForm.saleSelected.some(item => {
+        if(item.id === row.id){
+          item.spuSaleAttrValueList.splice(index,1)
+        }
+      })
+    },
+    //添加销售属性值失去焦点
+    loseFocus(row) {
+      const { saleAttrName, id } = row;
+      //将输入框变回按钮
+      row.edit = false;
+      //没有输入内容直接结束
+      if (!this.spuForm.saleAttrValue) return;
+      //给已选数据添加
+      this.spuForm.saleSelected.some((item) => {
+        if (item.id === id) {
+          item.spuSaleAttrValueList.push({
+            saleAttrValueName: this.spuForm.saleAttrValue,
+          });
+          return true;
+        }
+      });
+      //清空输入内容
+      this.spuForm.saleAttrValue = "";
+    },
+    //添加销售属性值
+    addSaleAttrValue(row) {
+      this.$set(row, "edit", true);
+      this.$nextTick(() => {
+        this.$refs.input.focus();
+      });
+    },
     //删除销售属性
-    delSaleAttr(row) {
-      console.log(row)
-      const { id, saleAttrName, $index } = row;
+    delSaleAttr({ id, saleAttrName, $index }) {
       //在已选数据中删除对应数据
       this.spuForm.saleSelected.splice($index, 1);
       //在未选数据中加入对应数据
       this.spuForm.saleValue.push({
         id,
-        name:saleAttrName,
+        name: saleAttrName,
       });
     },
     //添加销售属性
@@ -169,6 +217,7 @@ export default {
       this.spuForm.saleSelected.push({
         id: +id,
         saleAttrName: name,
+        spuSaleAttrValueList: [],
       });
       //在原数据中删除此数据
       this.spuForm.saleValue = this.filterSaleValue.filter(
@@ -258,7 +307,7 @@ export default {
         this.$message.error("获取SPU数据失败，请稍后重试");
         return;
       }
-      this.spuForm.saleSelected = result.data.spuSaleAttrList;
+      this.spuForm.saleSelected = result.data.spuSaleAttrList || [];
     },
     //退出edit模式
     exitEdit() {
