@@ -1,15 +1,15 @@
 <template>
   <div>
     <el-card style="margin-top: 20px">
-      <el-form ref="spuForm" :model="spuForm" label-width="80px">
-        <el-form-item label="SPU名称">
+      <el-form ref="spuForm" :rules="rules" :model="spuForm" label-width="80px">
+        <el-form-item prop="spuName" label="SPU名称">
           <el-input
             placeholder="请输入SPU名称"
             v-model="spuForm.spuName"
           ></el-input>
         </el-form-item>
 
-        <el-form-item label="品牌">
+        <el-form-item prop="spuTrademark" label="品牌">
           <el-select
             v-model="spuForm.spuTrademark.tmId"
             placeholder="请选择品牌"
@@ -23,7 +23,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="SPU描述">
+        <el-form-item prop="description" label="SPU描述">
           <el-input
             :rows="4"
             type="textarea"
@@ -32,7 +32,7 @@
           ></el-input>
         </el-form-item>
 
-        <el-form-item label="SPU图片">
+        <el-form-item prop="spuImg" label="SPU图片">
           <el-upload
             :action="`${$BASE_API}/admin/product/fileUpload`"
             list-type="picture-card"
@@ -67,7 +67,7 @@
           >
         </el-form-item>
 
-        <el-form-item>
+        <el-form-item prop="saleSelected">
           <el-table style="width: 100%" border :data="spuForm.saleSelected">
             <el-table-column
               type="index"
@@ -82,10 +82,10 @@
             <el-table-column label="属性值名称列表">
               <template v-slot="{ row }">
                 <el-tag
-                  @close="delSaleAttrValue(row,index)"
+                  @close="delSaleAttrValue(row, index)"
                   closable
                   type="success"
-                  v-for="(saleAttr,index) in row.spuSaleAttrValueList"
+                  v-for="(saleAttr, index) in row.spuSaleAttrValueList"
                   :key="saleAttr.id"
                   >{{ saleAttr.saleAttrValueName }}</el-tag
                 >
@@ -116,7 +116,9 @@
               </template>
             </el-table-column>
           </el-table>
-          <el-button style="margin: 10px 20px 0 0" type="primary"
+        </el-form-item>
+        <el-form-item>
+          <el-button style="margin: 10px 20px 0 0" type="primary" @click="save"
             >保存</el-button
           >
           <el-button @click="exitEdit">取消</el-button>
@@ -144,12 +146,22 @@ export default {
       },
       tmValue: "",
       saleValue: "",
+      rules: {
+        spuName: [
+          { required: true, message: "SPU名称不能为空", trigger: "blur" },
+        ],
+        spuTrademark: [{ required: true, message: "必须选择一个品牌" }],
+        description: [
+          { required: true, message: "SPU描述不能为空", trigger: "blur" },
+        ],
+        spuImg: [{ required: true, validator: this.imgListValidator }],
+        saleSelected: [{ required: true, validator: this.saleAttrValidator }],
+      },
     };
   },
   computed: {
     //过滤销售属性
     filterSaleValue() {
-      console.log("eufa");
       return this.spuForm.saleValue.filter((item) => {
         return !this.spuForm.saleSelected.find(
           (sale) => sale.baseSaleAttrId === item.id
@@ -165,13 +177,45 @@ export default {
     },
   },
   methods: {
-    //删除销售属性值
-    delSaleAttrValue(row,index) {
-      this.spuForm.saleSelected.some(item => {
-        if(item.id === row.id){
-          item.spuSaleAttrValueList.splice(index,1)
+    //保存
+    save() {
+      this.$refs.spuForm.validate((valid) => {
+        if (valid) {
+          console.log("ok");
         }
-      })
+      });
+    },
+    //上传图片验证
+    imgListValidator(rule, value, callback) {
+      if (this.spuForm.spuImg.length > 0) {
+        callback();
+        return;
+      }
+      callback(new Error("必须上传至少一张图片"));
+    },
+    //销售属性验证
+    saleAttrValidator(rule, value, callback) {
+      if (!this.spuForm.saleSelected.length > 0) {
+        callback(new Error("至少选择一个销售属性"));
+        return;
+      }
+      const isHasSale = this.spuForm.saleSelected.some(
+        (item) => item.spuSaleAttrValueList.length === 0
+      );
+      console.log(isHasSale);
+      if (isHasSale) {
+        callback(new Error("至少设置一个销售属性值"));
+        return;
+      }
+      callback();
+    },
+    //删除销售属性值
+    delSaleAttrValue(row, index) {
+      this.spuForm.saleSelected.some((item) => {
+        if (item.id === row.id) {
+          item.spuSaleAttrValueList.splice(index, 1);
+        }
+      });
     },
     //添加销售属性值失去焦点
     loseFocus(row) {
@@ -244,7 +288,6 @@ export default {
     },
     //文件上传成功
     handleAvatarSuccess(file, fileList) {
-      console.log(file, fileList);
       this.spuForm.spuImg.push({
         name: fileList.name,
         url: file.data,
@@ -263,7 +306,6 @@ export default {
     },
     //进入编辑获取原数据
     editValue({ spuName, description, id }) {
-      console.log(spuName, description);
       this.spuForm.spuName = spuName;
       this.spuForm.description = description;
       this.getTrademark();
