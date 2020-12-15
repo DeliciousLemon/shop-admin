@@ -53,12 +53,16 @@
           >
             <el-option
               :label="sale.name"
-              :value="sale.id"
+              :value="`${sale.id}-${sale.name}`"
               v-for="sale in filterSaleValue"
               :key="sale.id"
             ></el-option>
           </el-select>
-          <el-button style="margin-bottom: 20px" type="primary"
+          <el-button
+            style="margin-bottom: 20px"
+            type="primary"
+            @click="addSaleAttr"
+            :disabled="!saleValue"
             >+添加销售属性</el-button
           >
         </el-form-item>
@@ -120,7 +124,7 @@ export default {
     filterSaleValue() {
       return this.spuForm.saleValue.filter((item) => {
         return !this.spuForm.saleSelected.find(
-          (img) => img.baseSaleAttrId === item.id
+          (sale) => sale.baseSaleAttrId === item.id
         );
       });
     },
@@ -133,6 +137,21 @@ export default {
     },
   },
   methods: {
+    //添加销售属性
+    addSaleAttr() {
+      // this.saleValue就是id-name,截取id和name
+      const [id, name] = this.saleValue.split("-");
+      //在下面的表格数据中插入新数据
+      this.spuForm.saleSelected.push({
+        saleAttrName: name,
+      });
+      //在原数据中删除此数据
+      this.spuForm.saleValue = this.filterSaleValue.filter(
+        (item) => item.id !== +id
+      );
+      //清空select中的数据
+      this.saleValue = "";
+    },
     //图片上传之前
     beforeAvatarUpload(file) {
       //格式白名单
@@ -155,7 +174,7 @@ export default {
       this.spuForm.spuImg.push({
         name: fileList.name,
         url: file.data,
-        uid: fileList.uid
+        uid: fileList.uid,
       });
     },
     //接收当前品牌
@@ -237,6 +256,7 @@ export default {
   },
   beforeDestroy() {
     this.$bus.$off("getEditValue", this.editValue);
+    this.$bus.$off("spuTrademark", this.getSpuTrademark);
   },
 };
 </script>
