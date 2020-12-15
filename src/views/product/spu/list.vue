@@ -1,8 +1,8 @@
 <template>
   <div>
     <Category :isEditMode="isEditMode" />
-    <SpuShowList v-if="isEditMode"/>
-    <SpuEditList v-if="!isEditMode" />
+    <SpuShowList v-show="isEditMode"/>
+    <SpuEditList v-show="!isEditMode" />
   </div>
 </template>
 
@@ -24,7 +24,8 @@ export default {
   },
   methods:{
     //切换edit和show
-    changeEditMode(){
+    changeEditMode(row){
+      console.log(row)
       this.isEditMode = !this.isEditMode
     }
   },

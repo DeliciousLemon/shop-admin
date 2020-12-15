@@ -13,6 +13,15 @@ export default {
     })
   },
   /*
+  获取所有品牌
+  */
+  getAllTrademark() {
+    return request({
+      url: `${api_name}/getTrademarkList`,
+      method: 'GET'
+    })
+  },
+  /*
   新增品牌
   */
   addPageList(banner) {

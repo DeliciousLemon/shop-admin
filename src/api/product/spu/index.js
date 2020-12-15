@@ -13,4 +13,26 @@ export default {
       }
     })
   },
+  //获取spu图片
+  getSpuImage(spuId) {
+    return request({
+      method: "GET",
+      url: `${api_name}/spuImageList/${spuId}`
+    })
+  },
+  //获取销售属性
+  getSpuSale() {
+    return request({
+      method: "GET",
+      url: `${api_name}/baseSaleAttrList`
+    })
+  },
+  //获取spu属性
+  getSpuValue(spuId) {
+    return request({
+      method: "GET",
+      url: `${api_name}/getSpuById/${spuId}`
+    })
+  },
+
 }

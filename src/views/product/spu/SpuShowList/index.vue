@@ -14,9 +14,9 @@
         </el-table-column>
         <el-table-column prop="description" label="SPU描述"> </el-table-column>
         <el-table-column label="操作">
-          <template>
+          <template v-slot="{row}">
             <el-button type="warning" icon="el-icon-plus"></el-button>
-            <el-button type="danger" icon="el-icon-edit"></el-button>
+            <el-button type="danger" icon="el-icon-edit" @click="edit(row)"></el-button>
             <el-button type="danger" icon="el-icon-info"></el-button>
             <el-button type="danger" icon="el-icon-delete"></el-button>
           </template>
@@ -51,6 +51,11 @@ export default {
     };
   },
   methods: {
+    //进入编辑模式
+    edit(row){
+      this.$bus.$emit("getEditValue",row)
+      this.$bus.$emit('changeMode',row)
+    },
     //切换页码
     async changePage(page) {
       const result = await this.$API.spu.getAllSpu(
@@ -80,12 +85,14 @@ export default {
         category.category3Id
       );
       this.spuList = result.data;
-      console.log(result.data);
     },
   },
   mounted() {
     this.$bus.$on("change", this.getSpuList);
   },
+  beforeDestroy(){
+    this.$bus.$off("change", this.getSpuList);
+  }
 };
 </script>
 <style lang="sass">
