@@ -78,6 +78,7 @@
             </el-table-column>
             <el-table-column label="属性名" prop="saleAttrName">
             </el-table-column>
+
             <el-table-column label="属性值名称列表">
               <template v-slot="{ row }">
                 <el-tag
@@ -86,9 +87,19 @@
                   :key="saleAttr.id"
                   >{{ saleAttr.saleAttrValueName }}</el-tag
                 >
+                <el-button icon="el-icon-plus">添加销售属性值</el-button>
               </template>
             </el-table-column>
-            <el-table-column label="操作"> </el-table-column>
+
+            <el-table-column label="操作">
+              <template v-slot="{ row }">
+                <el-button
+                  type="danger"
+                  icon="el-icon-delete"
+                  @click="delSaleAttr(row)"
+                ></el-button>
+              </template>
+            </el-table-column>
           </el-table>
           <el-button style="margin: 10px 20px 0 0" type="primary"
             >保存</el-button
@@ -122,6 +133,7 @@ export default {
   computed: {
     //过滤销售属性
     filterSaleValue() {
+      console.log("eufa");
       return this.spuForm.saleValue.filter((item) => {
         return !this.spuForm.saleSelected.find(
           (sale) => sale.baseSaleAttrId === item.id
@@ -137,12 +149,25 @@ export default {
     },
   },
   methods: {
+    //删除销售属性
+    delSaleAttr(row) {
+      console.log(row)
+      const { id, saleAttrName, $index } = row;
+      //在已选数据中删除对应数据
+      this.spuForm.saleSelected.splice($index, 1);
+      //在未选数据中加入对应数据
+      this.spuForm.saleValue.push({
+        id,
+        name:saleAttrName,
+      });
+    },
     //添加销售属性
     addSaleAttr() {
       // this.saleValue就是id-name,截取id和name
       const [id, name] = this.saleValue.split("-");
       //在下面的表格数据中插入新数据
       this.spuForm.saleSelected.push({
+        id: +id,
         saleAttrName: name,
       });
       //在原数据中删除此数据
