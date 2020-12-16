@@ -34,5 +34,13 @@ export default {
       url: `${api_name}/getSpuById/${spuId}`
     })
   },
+  //更新
+  save(info) {
+    return request({
+      method: "POST",
+      url: `${api_name}/updateSpuInfo`,
+      data:info
+    })
+  },
 
 }
