@@ -35,10 +35,18 @@ export default {
     })
   },
   //更新
-  save(info) {
+  update(info) {
     return request({
       method: "POST",
       url: `${api_name}/updateSpuInfo`,
+      data:info
+    })
+  },
+  //添加
+  add(info) {
+    return request({
+      method: "POST",
+      url: `${api_name}/saveSpuInfo`,
       data:info
     })
   },

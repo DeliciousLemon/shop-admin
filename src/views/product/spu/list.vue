@@ -1,7 +1,7 @@
 <template>
   <div>
     <Category :isEditMode="isEditMode" />
-    <SpuShowList v-show="isEditMode"/>
+    <SpuShowList v-show="isEditMode" :isEditMode="isEditMode"/>
     <SpuEditList v-show="!isEditMode"/>
   </div>
 </template>
