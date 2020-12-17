@@ -167,9 +167,7 @@ export default {
     filterSaleValue: {
       get() {
         return this.allSaleValue.filter((item) => {
-          console.log("-------------------");
           return !this.spuTrademark.spuSaleAttrList.find((sale) => {
-            console.log(sale.baseSaleAttrId, item.id);
             return sale.baseSaleAttrId === item.id;
           });
         });
@@ -198,7 +196,6 @@ export default {
             spuImageList: this.filterImgList,
             spuSaleAttrList: this.spuTrademark.spuSaleAttrList,
           };
-          console.log(this.spuTrademark);
           if (this.spuTrademark.id) {
             this.$message("更新数据");
             await this.$API.spu.update(editInfo);
@@ -326,13 +323,13 @@ export default {
     },
     //接收当前编辑项数据
     getSpuTrademark(row) {
-      if (typeof(row) === "number") {
+      if (typeof row === "number") {
         this.spuTrademark = {
-          category3Id:row,
+          category3Id: row,
           spuImageList: [],
           spuSaleAttrList: [],
         };
-        return
+        return;
       }
       this.spuTrademark = {
         ...row,
@@ -390,7 +387,6 @@ export default {
         this.$message.error("获取销售属性失败，请稍后重试");
         return;
       }
-      console.log(result.data, "这是获取的所有销售属性");
       this.allSaleValue = result.data;
     },
     //获取SPU的销售属性

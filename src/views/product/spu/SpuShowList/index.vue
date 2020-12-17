@@ -12,7 +12,7 @@
         <el-table-column prop="description" label="SPU描述"> </el-table-column>
         <el-table-column label="操作">
           <template v-slot="{ row }">
-            <el-button type="warning" icon="el-icon-plus"></el-button>
+            <el-button type="warning" icon="el-icon-plus" @click="addSku(row)"></el-button>
             <el-button
               type="danger"
               icon="el-icon-edit"
@@ -64,6 +64,11 @@ export default {
     },
   },
   methods: {
+    //进入添加SKU页面
+    addSku(row){
+      this.$bus.$emit('addSku')
+      this.$bus.$emit('getInfo',row)
+    },
     //进入添加模式
     addSPU() {
       this.$bus.$emit("changeMode");
