@@ -93,6 +93,7 @@ export default {
     getAttrValue(id3){
       this.category.category3Id = id3
       this.$bus.$emit("change",this.category)
+      this.$bus.$emit("getAttr",this.category)
     }
   },
   async mounted() {
