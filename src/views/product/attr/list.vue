@@ -155,7 +155,6 @@ export default {
     async save() {
       let data;
       if (this.editId) {
-        console.log(1, this.attrValue.includes(this.editId));
         this.attrValue.map((item) => {
           if (item.id === this.editId) {
             item.attrName = this.editName;
@@ -167,9 +166,10 @@ export default {
         data = {
           attrName: this.editName,
           attrValueList: this.editValue,
-          categoryId: this.attrValue[0].category3Id,
+          categoryId: this.attrValue[0].categoryId,
           categoryLevel: 3,
         };
+        console.log(data,1111111111111)
         this.attrValue.push(data);
       }
       this.isEditMode = true;

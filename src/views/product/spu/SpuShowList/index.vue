@@ -8,7 +8,7 @@
         :disabled="!category3Id"
         >+添加SPU</el-button
       >
-      <el-table style="width: 100%" border :data="spuList.records">
+      <el-table style="width: 100%" border :data="spuList.records" v-loading="loading">
         <el-table-column type="index" label="序号" width="80" align="center">
         </el-table-column>
         <el-table-column prop="spuName" label="SPU名称" width="150">
@@ -61,7 +61,8 @@ export default {
       limit: 3,
       spuList: [],
       category3Id: "",
-      category:[]
+      category:[],
+      loading:false
     };
   },
   props: {
@@ -129,11 +130,13 @@ export default {
       this.spuList = [];
       if (!category.category3Id) return;
       this.category3Id = category.category3Id;
+      this.loading = true
       const result = await this.$API.spu.getAllSpu(
         this.page,
         this.limit,
         category.category3Id
       );
+      this.loading = false
       this.spuList = result.data;
     },
   },

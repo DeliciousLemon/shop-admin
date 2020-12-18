@@ -1,6 +1,6 @@
 <template>
   <el-card style="margin-top: 20px">
-    <el-form label-width="100px" :model="sku" ref="form" :rules="rules">
+    <el-form label-width="100px" :model="sku" ref="skuForm" :rules="rules">
       <el-form-item label="SPU名称">{{ spuName }}</el-form-item>
 
       <el-form-item label="SKU名称" prop="skuName">
@@ -10,18 +10,22 @@
       <el-form-item label="价格（元）" prop="skuPrice">
         <el-input-number
           :min="0"
+          :max="999999"
           controls-position="right"
           placeholder="SKU价格"
           v-model="sku.skuPrice"
+          @change="$refs.skuForm.clearValidate('skuPrice')"
         ></el-input-number>
       </el-form-item>
 
       <el-form-item label="重量（千克）" prop="skuWeight">
         <el-input-number
           :min="0"
+          :max="9999"
           controls-position="right"
           placeholder="SKU重量"
           v-model="sku.skuWeight"
+          @change="$refs.skuForm.clearValidate('skuWeight')"
         ></el-input-number>
       </el-form-item>
 
@@ -58,8 +62,8 @@
           v-for="(sale, index) in spuSaleAttrList"
           :key="sale.id"
         >
+          <span>{{ sale.saleAttrName }}</span>
           <el-select
-            :label="sale.saleAttrName"
             placeholder="请选择销售属性"
             @change="saleChange"
             v-model="sku.saleList[index]"
@@ -74,7 +78,7 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="图片列表">
+      <el-form-item label="图片列表" prop="image">
         <el-table
           style="width: 100%"
           border
@@ -106,8 +110,10 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button style="margin: 10px 20px 0 0" type="primary">保存</el-button>
-        <el-button @click="$bus.$emit('addSku')">取消</el-button>
+        <el-button style="margin: 10px 20px 0 0" type="primary" @click="save"
+          >保存</el-button
+        >
+        <el-button @click="exitAddSku">取消</el-button>
       </el-form-item>
     </el-form>
   </el-card>
@@ -119,9 +125,8 @@ export default {
   data() {
     return {
       spuName: "", //SPU名称
-      spuSaleAttrList: [], //销售属性
+      spuSaleAttrList: [], //所有的销售属性
       spuImageList: [], //所有图片
-      skuSaleAttrValue: "", //选择的销售属性
       attrValue: [], //所有的平台属性
       sku: {
         skuName: "",
@@ -145,31 +150,78 @@ export default {
         skuDescription: [
           { required: true, message: "请输入SKU描述", trigger: "blur" },
         ],
+        attr: [{ required: true, validator: this.attrValidate }],
+        sale: [{ required: true, validator: this.saleValidate }],
+        image: [{ required: true, validator: this.imageValidate }],
       },
     };
   },
   methods: {
+    //保存
+    save() {
+      this.$refs.skuForm.validate((valid) => {
+        if (valid) {
+          this.$message.success("校验通过");
+        }
+      });
+    },
+    //图片校验
+    imageValidate(rule, value, callback) {
+      if (this.sku.imageList.length === 0) {
+        callback(new Error("请至少选择一张图片"));
+      }
+      if (!this.spuImageList.some((item) => item.isDefault)) {
+        callback(new Error("请设置默认图片"));
+      }
+      callback();
+    },
+    //销售属性校验
+    saleValidate(rule, value, callback) {
+      if (this.sku.saleList.length < this.spuSaleAttrList.length) {
+        callback(new Error("请选择销售属性"));
+      }
+      callback();
+    },
+    //平台属性校验
+    attrValidate(rule, value, callback) {
+      if (this.sku.attrList.length < this.attrValue.length) {
+        callback(new Error("请选择平台属性"));
+      }
+      callback();
+    },
     //选择平台属性
     attrChange(value) {
-      console.log("平台属性", value);
+      //清空校验结果
+      this.$refs.skuForm.clearValidate("attr");
     },
     //选择销售属性
     saleChange(value) {
-      console.log("销售属性", value);
+      //清空校验结果
+      this.$refs.skuForm.clearValidate("sale");
     },
     //选中图片（点击复选框触发）
-    imgSelect(selection) {
-      this.sku.imageList = {
-        ...selection,
-      };
+    imgSelect(selection, row) {
+      console.log(row);
+      const { id } = row;
+      this.sku.imageList = [...selection];
+      //将当前点击的图片的isDefault设置为false
+      this.spuImageList = this.spuImageList.map((item) => {
+        if (item.id === id) {
+          item.isDefault = false;
+        }
+        return item;
+      });
     },
     //设置默认
     setDefault(row) {
       const { id } = row;
-      //重新读取勾选的选项
-
       this.spuImageList = this.spuImageList.map((item) => {
-        if (id === item.id) {
+        //判断是否选中
+        if (
+          !!this.sku.imageList.find((img) => img.id === item.id) &&
+          id === item.id
+        ) {
+          this.$refs.skuForm.clearValidate("image")
           return {
             ...item,
             isDefault: true,
@@ -204,6 +256,20 @@ export default {
     async getAttr(category) {
       const attr = await this.$API.attr.getAllAttr(category);
       this.attrValue = attr.data;
+    },
+    //退出添加SKU
+    exitAddSku() {
+      this.$bus.$emit("addSku");
+      this.$refs.skuForm.clearValidate();
+      this.sku = {
+        skuName: "",
+        skuPrice: 0,
+        skuWeight: 0,
+        skuDescription: "",
+        imageList: [], //选择的图片
+        attrList: [], //选择的平台属性
+        saleList: [], //选择的销售属性
+      };
     },
   },
   mounted() {
