@@ -91,6 +91,7 @@ export default {
     },
     //保存id3
     getAttrValue(id3){
+      this.$message.success("获取spu数据")
       this.category.category3Id = id3
       this.$bus.$emit("change",this.category)
       this.$bus.$emit("getAttr",this.category)

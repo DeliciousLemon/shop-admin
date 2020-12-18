@@ -13,6 +13,13 @@ export default {
       }
     })
   },
+  //删除spu
+  delSpu(spuId){
+    return request({
+      method:"DELETE",
+      url:`${api_name}/deleteSpu/${spuId}`
+    })
+  },
   //获取spu图片
   getSpuImage(spuId) {
     return request({

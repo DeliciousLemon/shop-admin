@@ -1,7 +1,11 @@
 <template>
   <div>
     <el-card style="margin-top: 20px">
-      <el-button style="margin-bottom: 20px" type="primary" @click="addSPU" :disabled="!category3Id"
+      <el-button
+        style="margin-bottom: 20px"
+        type="primary"
+        @click="addSPU"
+        :disabled="!category3Id"
         >+添加SPU</el-button
       >
       <el-table style="width: 100%" border :data="spuList.records">
@@ -12,14 +16,22 @@
         <el-table-column prop="description" label="SPU描述"> </el-table-column>
         <el-table-column label="操作">
           <template v-slot="{ row }">
-            <el-button type="warning" icon="el-icon-plus" @click="addSku(row)"></el-button>
+            <el-button
+              type="warning"
+              icon="el-icon-plus"
+              @click="addSku(row)"
+            ></el-button>
             <el-button
               type="danger"
               icon="el-icon-edit"
               @click="edit(row)"
             ></el-button>
             <el-button type="danger" icon="el-icon-info"></el-button>
-            <el-button type="danger" icon="el-icon-delete"></el-button>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              @click="del(row)"
+            ></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -49,6 +61,7 @@ export default {
       limit: 3,
       spuList: [],
       category3Id: "",
+      category:[]
     };
   },
   props: {
@@ -64,10 +77,20 @@ export default {
     },
   },
   methods: {
+    //删除spu
+    async del({ id }) {
+      const result = await this.$API.spu.delSpu(id);
+      if (result.code !== 200) {
+        this.$message.error("删除失败");
+        return;
+      }
+      this.$message.success("删除成功");
+      this.getSpuList(this.category)
+    },
     //进入添加SKU页面
-    addSku(row){
-      this.$bus.$emit('addSku')
-      this.$bus.$emit('getInfo',row)
+    addSku(row) {
+      this.$bus.$emit("addSku");
+      this.$bus.$emit("getInfo", row);
     },
     //进入添加模式
     addSPU() {
@@ -77,6 +100,7 @@ export default {
     },
     //进入编辑模式
     edit(row) {
+      this.$message.info("进入编辑模式")
       this.$bus.$emit("getEditValue", row);
       this.$bus.$emit("changeMode");
       this.$bus.$emit("spuTrademark", row);
@@ -101,6 +125,7 @@ export default {
     },
     //获取spu数据
     async getSpuList(category) {
+      this.category = category
       this.spuList = [];
       if (!category.category3Id) return;
       this.category3Id = category.category3Id;

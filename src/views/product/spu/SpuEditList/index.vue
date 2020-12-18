@@ -197,12 +197,20 @@ export default {
             spuSaleAttrList: this.spuTrademark.spuSaleAttrList,
           };
           if (this.spuTrademark.id) {
-            this.$message("更新数据");
-            await this.$API.spu.update(editInfo);
+            const update = await this.$API.spu.update(editInfo);
+            if (update.code === 200) {
+              this.$message.success("更新数据成功");
+            } else {
+              this.$message.error("更新数据失败");
+            }
           } else {
-            this.$message("保存数据");
             delete editInfo.id;
-            await this.$API.spu.add(editInfo);
+            const save = await this.$API.spu.add(editInfo);
+            if (save.code === 200) {
+              this.$message.success("保存数据成功");
+            } else {
+              this.$message.error("保存数据失败");
+            }
           }
           this.$bus.$emit("changeMode");
         }
@@ -348,11 +356,12 @@ export default {
       const { spuName, description, id } = row;
       //id不存在就是添加模式
       if (!id) {
-        this.$message("进入新添加模式");
+        this.$message("进入添加");
         this.getTrademark();
         this.getSale();
         return;
       }
+      this.$message("进入编辑");
       this.spuName = spuName;
       this.description = description;
       this.getTrademark();
@@ -364,18 +373,20 @@ export default {
     async getTrademark() {
       const result = await this.$API.trademark.getAllTrademark();
       if (result.code !== 200) {
-        this.$message.error("获取品牌数据失败，请稍后重试");
+        this.$message.error("获取所有品牌数据失败，请稍后重试");
         return;
       }
+      this.$message.success("获取所有品牌信息成功");
       this.trademark = result.data;
     },
     //获取spu图片
     async getImage(id) {
       const result = await this.$API.spu.getSpuImage(id);
       if (result.code !== 200) {
-        this.$message.error("获取图片失败，请稍后重试");
+        this.$message.error("获取spu图片失败，请稍后重试");
         return;
       }
+      this.$message.success("获取spu图片成功");
       this.spuTrademark.spuImageList = result.data.map((item) => {
         return { uid: item.id, name: item.imgName, url: item.imgUrl };
       });
@@ -384,24 +395,26 @@ export default {
     async getSale() {
       const result = await this.$API.spu.getSpuSale();
       if (result.code !== 200) {
-        this.$message.error("获取销售属性失败，请稍后重试");
+        this.$message.error("获取所有销售属性失败，请稍后重试");
         return;
       }
+      this.$message.success("获取所有销售属性成功");
       this.allSaleValue = result.data;
     },
     //获取SPU的销售属性
     async getSpu(id) {
       const result = await this.$API.spu.getSpuValue(id);
       if (result.code !== 200) {
-        this.$message.error("获取SPU数据失败，请稍后重试");
+        this.$message.error("获取SPU销售属性失败，请稍后重试");
         return;
       }
+      this.$message.success("获取spu销售属性成功");
       this.spuTrademark.spuSaleAttrList = result.data.spuSaleAttrList || [];
     },
     //退出edit模式
     exitEdit() {
+      this.$message("取消");
       this.$bus.$emit("changeMode");
-
       this.saleId = ""; //当前编辑属性id
       this.trademark = []; //所有品牌
       this.allSaleValue = []; //所有销售属性的值
