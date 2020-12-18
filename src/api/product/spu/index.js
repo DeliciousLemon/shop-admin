@@ -57,5 +57,13 @@ export default {
       data:info
     })
   },
+  //保存SKU
+  addSku(data) {
+    return request({
+      method: "POST",
+      url: `${api_name}/saveSkuInfo`,
+      data
+    })
+  },
 
 }

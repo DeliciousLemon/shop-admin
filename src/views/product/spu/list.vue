@@ -35,6 +35,7 @@ export default {
     },
     //切换添加SKU页面
     changeAddSku(){
+      console.log("触发了")
       this.isAddSku = !this.isAddSku
     }
   },

@@ -80,6 +80,7 @@
 
       <el-form-item label="图片列表" prop="image">
         <el-table
+          ref="table"
           style="width: 100%"
           border
           :data="spuImageList"
@@ -124,6 +125,9 @@ export default {
   name: "AddSku",
   data() {
     return {
+      tmId: "",
+      spuId: "",
+      category3Id: "",
       spuName: "", //SPU名称
       spuSaleAttrList: [], //所有的销售属性
       spuImageList: [], //所有图片
@@ -159,9 +163,68 @@ export default {
   methods: {
     //保存
     save() {
-      this.$refs.skuForm.validate((valid) => {
+      this.$refs.skuForm.validate(async (valid) => {
         if (valid) {
           this.$message.success("校验通过");
+          //处理平台属性
+          const skuAttrValueList = this.sku.attrList.map((item) => {
+            return {
+              attrId: +item.split("-")[0],
+              valueId: +item.split("-")[1],
+            };
+          });
+          //处理销售属性
+          const skuSaleAttrValueList = this.sku.saleList.map((item) => {
+            return {
+              saleAttrValueId: +item.split("-")[1],
+              skuId: +item.split("-")[0],
+            };
+          });
+          //处理图片
+
+          const skuImageList = this.sku.imageList.map((item) => {
+            /*
+            遍历每个图片，将图片在spuImageList中isDefault的状态返回，
+            其他图片返回false（目的：获取spuImageList中的默认图片给skuImageList中对应的图片设置）
+            */
+            item.isDefault = this.spuImageList.some((img) => {
+              if (img.id === item.id) {
+                return img.isDefault;
+              }
+              return false;
+            });
+            return {
+              imgName: item.imgName,
+              imgUrl: item.imgUrl,
+              isDefault: item.isDefault,
+              spuImgId: +item.spuId,
+              skuId: +item.id,
+            };
+          });
+          //默认图片路径
+          const skuDefaultImg = this.spuImageList.find((item) => item.isDefault)
+            .imgUrl;
+          const data = {
+            tmId: +this.tmId,
+            spuId: +this.spuId,
+            skuDesc: this.sku.skuDescription,
+            category3Id: this.category3Id,
+            price: +this.sku.skuPrice,
+            skuName: this.sku.skuName,
+            weight: +this.sku.skuWeight,
+            skuAttrValueList,
+            skuSaleAttrValueList,
+            skuImageList,
+            skuDefaultImg,
+          };
+          const result = await this.$API.spu.addSku(data);
+          if (result.code === 200) {
+            this.$message.success("保存成功");
+            this.$bus.$emit("addSku");
+            this.clear();
+          } else {
+            this.$message.error("保存失败");
+          }
         }
       });
     },
@@ -201,7 +264,6 @@ export default {
     },
     //选中图片（点击复选框触发）
     imgSelect(selection, row) {
-      console.log(row);
       const { id } = row;
       this.sku.imageList = [...selection];
       //将当前点击的图片的isDefault设置为false
@@ -221,7 +283,7 @@ export default {
           !!this.sku.imageList.find((img) => img.id === item.id) &&
           id === item.id
         ) {
-          this.$refs.skuForm.clearValidate("image")
+          this.$refs.skuForm.clearValidate("image");
           return {
             ...item,
             isDefault: true,
@@ -233,6 +295,7 @@ export default {
         };
       });
     },
+    //获取数据
     async getInfo(data) {
       /*
       data中数据:
@@ -244,6 +307,12 @@ export default {
       spuSaleAttrList: null
       tmId: 6074
       */
+      //清空上次保存的图片选择
+      console.log(this.$refs);
+      this.$refs.table.clearSelection();
+      this.tmId = data.tmId;
+      this.spuId = data.id;
+      this.category3Id = data.category3Id;
       this.spuName = data.spuName;
       //请求销售数据
       const result = await this.$API.spu.getSpuValue(data.id);
@@ -260,7 +329,10 @@ export default {
     //退出添加SKU
     exitAddSku() {
       this.$bus.$emit("addSku");
-      this.$refs.skuForm.clearValidate();
+      this.clear();
+    },
+    //清空数据
+    clear() {
       this.sku = {
         skuName: "",
         skuPrice: 0,
